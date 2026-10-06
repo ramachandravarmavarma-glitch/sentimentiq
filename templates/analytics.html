@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics & Visualizations | SentimentIQ{% endblock %}
+{% block page_title %}Sentiment Analytics{% endblock %}
+{% block page_subtitle %}Deep computational metrics calculated exclusively from real database records{% endblock %}
+
+{% block content %}
+<!-- Top 6 Analytics KPI Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-2">
+        <div class="stat-card p-3">
+            <span class="stat-label" style="font-size: 0.75rem;">Total Analyses</span>
+            <div class="stat-value" style="font-size: 2rem;">{{ stats.total }}</div>
+            <div class="stat-sub" style="font-size: 0.75rem;">Database total</div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-2">
+        <div class="stat-card stat-pos p-3">
+            <span class="stat-label" style="font-size: 0.75rem;">Positive %</span>
+            <div class="stat-value" style="font-size: 2rem; color: #34d399;">{{ stats.positive_pct }}%</div>
+            <div class="stat-sub" style="font-size: 0.75rem;">{{ stats.positive }} entries</div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-2">
+        <div class="stat-card stat-neg p-3">
+            <span class="stat-label" style="font-size: 0.75rem;">Negative %</span>
+            <div class="stat-value" style="font-size: 2rem; color: #fb7185;">{{ stats.negative_pct }}%</div>
+            <div class="stat-sub" style="font-size: 0.75rem;">{{ stats.negative }} entries</div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-2">
+        <div class="stat-card stat-neu p-3">
+            <span class="stat-label" style="font-size: 0.75rem;">Neutral %</span>
+            <div class="stat-value" style="font-size: 2rem; color: #38bdf8;">{{ stats.neutral_pct }}%</div>
+            <div class="stat-sub" style="font-size: 0.75rem;">{{ stats.neutral }} entries</div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-2">
+        <div class="stat-card p-3">
+            <span class="stat-label" style="font-size: 0.75rem;">Average Polarity</span>
+            <div class="stat-value" style="font-size: 2rem; color: {% if stats.avg_polarity > 0.1 %}#10b981{% elif stats.avg_polarity < -0.1 %}#f43f5e{% else %}#06b6d4{% endif %}; font-family: var(--font-mono);">
+                {{ stats.avg_polarity_display }}
+            </div>
+            <div class="stat-sub" style="font-size: 0.75rem;">Range [-1.0, +1.0]</div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-2">
+        <div class="stat-card p-3">
+            <span class="stat-label" style="font-size: 0.75rem;">Avg Subjectivity</span>
+            <div class="stat-value" style="font-size: 2rem; color: #c084fc; font-family: var(--font-mono);">
+                {{ stats.avg_subjectivity_display }}
+            </div>
+            <div class="stat-sub" style="font-size: 0.75rem;">Range [0.0, 1.0]</div>
+        </div>
+    </div>
+</div>
+
+{% if stats.total > 0 %}
+<!-- Visualization Grid Row 1 -->
+<div class="row g-4 mb-4">
+    <!-- Chart 1: Sentiment Distribution (Doughnut) -->
+    <div class="col-lg-5">
+        <div class="glass-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-0">Sentiment Distribution</h2>
+                    <span class="text-secondary" style="font-size: 0.8rem;">Ratio across all evaluated texts</span>
+                </div>
+                <span class="badge bg-dark text-secondary border border-secondary border-opacity-50">Doughnut</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="sentimentDistChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Polarity Distribution (Bar) -->
+    <div class="col-lg-7">
+        <div class="glass-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-0">Polarity Score Spectrum</h2>
+                    <span class="text-secondary" style="font-size: 0.8rem;">Distribution partitioned into discrete polarity buckets</span>
+                </div>
+                <span class="badge bg-dark text-secondary border border-secondary border-opacity-50">Histogram</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="polarityDistChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visualization Grid Row 2 -->
+<div class="row g-4">
+    <!-- Chart 3: Subjectivity Distribution (Bar) -->
+    <div class="col-lg-6">
+        <div class="glass-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-0">Subjectivity Distribution</h2>
+                    <span class="text-secondary" style="font-size: 0.8rem;">Factual assertion vs personal opinion density</span>
+                </div>
+                <span class="badge bg-dark text-secondary border border-secondary border-opacity-50">Buckets</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="subjectivityDistChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 4: Analysis Activity Timeline (Line) -->
+    <div class="col-lg-6">
+        <div class="glass-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-0">Analysis Activity Over Time</h2>
+                    <span class="text-secondary" style="font-size: 0.8rem;">Daily throughput frequency recorded in database</span>
+                </div>
+                <span class="badge bg-dark text-secondary border border-secondary border-opacity-50">Timeline</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="activityTimelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="glass-card text-center py-5">
+    <div class="logo-icon-box mx-auto mb-3" style="width: 52px; height: 52px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle);">
+        <i data-lucide="bar-chart-2" style="color: #94a3b8; width: 26px; height: 26px;"></i>
+    </div>
+    <h3 class="h5 text-light mb-1">No database records to visualize yet</h3>
+    <p class="text-secondary" style="font-size: 0.88rem; max-width: 420px; margin: 0 auto 1.5rem;">
+        The analytics charts render exclusively from real database records. Analyze some text to generate your first live visualizations.
+    </p>
+    <a href="{{ url_for('sentiment.analyze') }}" class="btn-brand" style="font-size: 0.9rem; padding: 0.5rem 1.4rem;">
+        <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+        <span>Analyze First Text</span>
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

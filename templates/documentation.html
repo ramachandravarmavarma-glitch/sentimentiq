@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Documentation & Technical Architecture | SentimentIQ{% endblock %}
+{% block page_title %}System Documentation{% endblock %}
+{% block page_subtitle %}Comprehensive architectural guide, NLP formulas, and operational runbook{% endblock %}
+
+{% macro doc_content() %}
+<div class="row g-4">
+    <!-- Quick Navigation Index Sidebar -->
+    <div class="col-lg-3 d-none d-lg-block">
+        <div class="glass-card sticky-top" style="top: calc(var(--topbar-height) + 1.5rem);">
+            <h2 class="h6 fw-bold text-uppercase text-secondary mb-3" style="font-size: 0.75rem; letter-spacing: 0.08em;">
+                Table of Contents
+            </h2>
+            <nav class="d-flex flex-column gap-2" style="font-size: 0.85rem;">
+                <a href="#what-is-sentiment" class="text-secondary text-decoration-none py-1 hover-light">1. Sentiment Analysis</a>
+                <a href="#what-is-textblob" class="text-secondary text-decoration-none py-1 hover-light">2. TextBlob Architecture</a>
+                <a href="#polarity-subjectivity" class="text-secondary text-decoration-none py-1 hover-light">3. Polarity & Subjectivity</a>
+                <a href="#classification-thresholds" class="text-secondary text-decoration-none py-1 hover-light">4. Threshold Classification</a>
+                <a href="#app-architecture" class="text-secondary text-decoration-none py-1 hover-light">5. Application Architecture</a>
+                <a href="#database-schema" class="text-secondary text-decoration-none py-1 hover-light">6. Database Schema</a>
+                <a href="#tech-stack" class="text-secondary text-decoration-none py-1 hover-light">7. Technology Stack</a>
+                <a href="#how-to-run" class="text-secondary text-decoration-none py-1 hover-light">8. Setup & How to Run</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Documentation Content -->
+    <div class="col-lg-9">
+        <!-- Section 1: What is Sentiment Analysis -->
+        <div class="glass-card mb-4" id="what-is-sentiment">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="book" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">1. What is Sentiment Analysis?</h2>
+            </div>
+            <p class="text-secondary" style="line-height: 1.7;">
+                <strong>Sentiment Analysis</strong> (also known as opinion mining) is a computational linguistics and Natural Language Processing (NLP) methodology used to systematically identify, extract, and quantify emotional tone, subjective attitudes, and affective states present in written text.
+            </p>
+            <p class="text-secondary mb-0" style="line-height: 1.7;">
+                In enterprise and software ecosystems, sentiment analysis is applied to customer reviews, brand mentions, social discussions, feedback surveys, and support tickets to monitor public perception, detect early grievances, and measure user satisfaction.
+            </p>
+        </div>
+
+        <!-- Section 2: What is TextBlob -->
+        <div class="glass-card mb-4" id="what-is-textblob">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="cpu" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">2. What is TextBlob?</h2>
+            </div>
+            <p class="text-secondary" style="line-height: 1.7;">
+                <strong>TextBlob</strong> is a Python library designed for processing textual data. Built on top of the Natural Language Toolkit (NLTK) and Pattern libraries, TextBlob exposes clean, Pythonic APIs for common NLP tasks, including part-of-speech tagging, noun phrase extraction, sentiment analysis, and tokenization.
+            </p>
+            <div class="p-3 rounded mb-3" style="background: rgba(11, 16, 28, 0.9); border: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.85rem; color: #cbd5e1;">
+                <span class="text-muted"># Core TextBlob Sentiment Evaluation</span><br>
+                <span style="color: #f43f5e;">from</span> textblob <span style="color: #f43f5e;">import</span> TextBlob<br><br>
+                blob = TextBlob(<span style="color: #34d399;">"SentimentIQ is delightfully accurate and reliable!"</span>)<br>
+                polarity = blob.sentiment.polarity        <span class="text-muted"># returns float [-1.0, 1.0]</span><br>
+                subjectivity = blob.sentiment.subjectivity  <span class="text-muted"># returns float [0.0, 1.0]</span>
+            </div>
+        </div>
+
+        <!-- Section 3: Polarity & Subjectivity -->
+        <div class="glass-card mb-4" id="polarity-subjectivity">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="sliders" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">3. Polarity and Subjectivity Mathematical Ranges</h2>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <h3 class="h6 fw-bold text-success mb-2">Polarity Spectrum [-1.0 to +1.0]</h3>
+                        <p class="text-secondary" style="font-size: 0.88rem;">
+                            Polarity quantifies the emotional valence of text:
+                        </p>
+                        <ul class="text-secondary" style="font-size: 0.85rem; padding-left: 1.2rem;">
+                            <li><strong>-1.00:</strong> Intensely Negative (grief, outrage, disgust)</li>
+                            <li><strong>0.00:</strong> Perfectly Neutral or emotionally balanced</li>
+                            <li><strong>+1.00:</strong> Intensely Positive (admiration, joy, delight)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded h-100" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <h3 class="h6 fw-bold text-info mb-2">Subjectivity Spectrum [0.0 to 1.0]</h3>
+                        <p class="text-secondary" style="font-size: 0.88rem;">
+                            Subjectivity quantifies factual statements versus personal bias:
+                        </p>
+                        <ul class="text-secondary" style="font-size: 0.85rem; padding-left: 1.2rem;">
+                            <li><strong>0.00:</strong> Purely Objective (empirical facts, data, logs)</li>
+                            <li><strong>0.50:</strong> Balanced mix of objective context and interpretation</li>
+                            <li><strong>1.00:</strong> Purely Subjective (personal beliefs, feelings, bias)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Classification Thresholds -->
+        <div class="glass-card mb-4" id="classification-thresholds">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="check-square" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">4. Documented Classification Thresholds</h2>
+            </div>
+            <p class="text-secondary" style="font-size: 0.9rem;">
+                SentimentIQ adheres strictly to documented, empirical sentiment thresholds and does not invent speculative emotional sub-states:
+            </p>
+            <div class="table-responsive">
+                <table class="table-custom mb-0">
+                    <thead>
+                        <tr>
+                            <th>Classification</th>
+                            <th>Polarity Rule</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge-sentiment badge-pos">POSITIVE</span></td>
+                            <td style="font-family: var(--font-mono); color: #34d399;">Polarity &gt; +0.10</td>
+                            <td class="text-secondary">Expresses approval, delight, satisfaction, optimism, or recommendation.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-sentiment badge-neg">NEGATIVE</span></td>
+                            <td style="font-family: var(--font-mono); color: #fb7185;">Polarity &lt; -0.10</td>
+                            <td class="text-secondary">Expresses dissatisfaction, malfunction, criticism, anger, or frustration.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-sentiment badge-neu">NEUTRAL</span></td>
+                            <td style="font-family: var(--font-mono); color: #38bdf8;">-0.10 &le; Polarity &le; +0.10</td>
+                            <td class="text-secondary">Factual, informative, descriptive, or devoid of significant emotional polarity.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 5: Application Architecture -->
+        <div class="glass-card mb-4" id="app-architecture">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="layers" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">5. Application Architecture</h2>
+            </div>
+            <p class="text-secondary" style="font-size: 0.9rem;">
+                SentimentIQ is structured following enterprise Flask Application Factory design patterns, modular Blueprints, and clean separation of concerns:
+            </p>
+            <div class="p-3 rounded" style="background: rgba(11, 16, 28, 0.85); border: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.82rem; color: #94a3b8; line-height: 1.6;">
+                sentimentiq/<br>
+                ├── app.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Application factory `create_app()`<br>
+                ├── config.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Environment settings & threshold configs<br>
+                ├── database/<br>
+                │ &nbsp; ├── database.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# SQLAlchemy initialization & migration engine<br>
+                │ &nbsp; └── models.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# User and SentimentResult DB schemas<br>
+                ├── routes/<br>
+                │ &nbsp; ├── auth.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Registration, Login, Logout, `@login_required`<br>
+                │ &nbsp; ├── main.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Landing page, settings, diagnostics<br>
+                │ &nbsp; ├── sentiment.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Dashboard and `/api/analyze` endpoints<br>
+                │ &nbsp; ├── history.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# History filtering, inspection, and Pandas CSV export<br>
+                │ &nbsp; └── analytics.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Database analytics & Chart.js API<br>
+                ├── services/<br>
+                │ &nbsp; └── sentiment_service.py # Pure TextBlob NLP evaluation logic<br>
+                ├── templates/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Semantic Jinja2 HTML5 views<br>
+                ├── static/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Custom CSS, Chart.js engine, dynamic JS<br>
+                └── tests/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Automated unit & route integration tests
+            </div>
+        </div>
+
+        <!-- Section 6: Database Schema -->
+        <div class="glass-card mb-4" id="database-schema">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="database" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">6. Database Schema & Data Isolation</h2>
+            </div>
+            <p class="text-secondary" style="font-size: 0.9rem;">
+                SentimentIQ utilizes SQLite via SQLAlchemy ORM. All data is isolated by <code>user_id</code> foreign key relationships so each user only sees and exports their private data:
+            </p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <strong class="text-light d-block mb-2">Table: users</strong>
+                        <ul class="text-secondary mb-0" style="font-size: 0.82rem; font-family: var(--font-mono);">
+                            <li>id (INTEGER PRIMARY KEY)</li>
+                            <li>username (VARCHAR(80) UNIQUE)</li>
+                            <li>email (VARCHAR(120) UNIQUE)</li>
+                            <li>password_hash (VARCHAR(256))</li>
+                            <li>created_at (DATETIME)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <strong class="text-light d-block mb-2">Table: sentiment_results</strong>
+                        <ul class="text-secondary mb-0" style="font-size: 0.82rem; font-family: var(--font-mono);">
+                            <li>id (INTEGER PRIMARY KEY)</li>
+                            <li>user_id (INTEGER FK -> users.id)</li>
+                            <li>text (TEXT NOT NULL)</li>
+                            <li>sentiment (VARCHAR(20))</li>
+                            <li>polarity (FLOAT NOT NULL)</li>
+                            <li>subjectivity (FLOAT NOT NULL)</li>
+                            <li>created_at (DATETIME)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 7: Technology Stack -->
+        <div class="glass-card mb-4" id="tech-stack">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="code" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">7. Technology Stack</h2>
+            </div>
+            <div class="row g-3 text-secondary" style="font-size: 0.88rem;">
+                <div class="col-md-6">
+                    <strong class="text-light d-block mb-1">&bull; Backend:</strong>
+                    <div>Python 3.12+, Flask 3.1, SQLAlchemy 2.0, TextBlob 0.20, Pandas, Werkzeug (Password Hashing)</div>
+                </div>
+                <div class="col-md-6">
+                    <strong class="text-light d-block mb-1">&bull; Frontend & Design:</strong>
+                    <div>HTML5, Modern CSS3 (Glassmorphism & SaaS Design Tokens), Bootstrap 5.3, Chart.js 4, Lucide Icons</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 8: How to Run -->
+        <div class="glass-card" id="how-to-run">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="logo-icon-box" style="width: 32px; height: 32px;">
+                    <i data-lucide="terminal" style="width: 16px; height: 16px;"></i>
+                </div>
+                <h2 class="h5 fw-bold mb-0 text-light">8. Setup & How to Run</h2>
+            </div>
+            <div class="p-3 rounded mb-3" style="background: rgba(11, 16, 28, 0.9); border: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.85rem; color: #38bdf8;">
+                <span class="text-muted"># 1. Create and activate virtual environment</span><br>
+                python -m venv .venv<br>
+                .venv\Scripts\activate &nbsp;<span class="text-muted"># (On Windows PowerShell)</span><br><br>
+                <span class="text-muted"># 2. Install dependencies</span><br>
+                pip install -r requirements.txt<br><br>
+                <span class="text-muted"># 3. Launch Flask server</span><br>
+                python app.py<br><br>
+                <span class="text-muted"># 4. Open in browser</span><br>
+                http://127.0.0.1:5000
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+{{ doc_content() }}
+{% endblock %}
+
+{% block public_content %}
+{{ doc_content() }}
+{% endblock %}

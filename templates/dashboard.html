@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Sentiment Overview{% endblock %}
+{% block page_title %}Sentiment Overview{% endblock %}
+{% block page_subtitle %}Live computational metrics for {{ current_user.username }}{% endblock %}
+
+{% block content %}
+<!-- Top Metric / KPI Cards (REAL Database Data) -->
+<div class="row g-4 mb-4">
+    <!-- Total Analyses Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-brand">
+            <div>
+                <span class="stat-label">Total Analyses</span>
+                <div class="stat-value" id="card-total-analyses">{{ stats.total }}</div>
+            </div>
+            <div class="stat-sub">
+                <i data-lucide="layers" style="width: 14px; height: 14px; color: #818cf8;"></i>
+                <span>Database total records</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Positive Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-pos">
+            <div>
+                <span class="stat-label">Positive Sentiment</span>
+                <div class="stat-value" style="color: #34d399;" id="card-positive-analyses">{{ stats.positive }}</div>
+            </div>
+            <div class="stat-sub">
+                <i data-lucide="trending-up" style="width: 14px; height: 14px; color: #10b981;"></i>
+                <span>{{ stats.positive_pct }}% of all text evaluated</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Negative Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-neg">
+            <div>
+                <span class="stat-label">Negative Sentiment</span>
+                <div class="stat-value" style="color: #fb7185;" id="card-negative-analyses">{{ stats.negative }}</div>
+            </div>
+            <div class="stat-sub">
+                <i data-lucide="trending-down" style="width: 14px; height: 14px; color: #f43f5e;"></i>
+                <span>{{ stats.negative_pct }}% of all text evaluated</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Neutral Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card stat-neu">
+            <div>
+                <span class="stat-label">Neutral / Factual</span>
+                <div class="stat-value" style="color: #38bdf8;" id="card-neutral-analyses">{{ stats.neutral }}</div>
+            </div>
+            <div class="stat-sub">
+                <i data-lucide="minus" style="width: 14px; height: 14px; color: #06b6d4;"></i>
+                <span>{{ stats.neutral_pct }}% of all text evaluated</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Quick Workspace Shortcut & Status -->
+    <div class="col-lg-8">
+        <div class="glass-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h5 fw-bold mb-1">Recent Text Intelligence Activity</h2>
+                    <p class="text-secondary mb-0" style="font-size: 0.85rem;">Latest analyses saved to your private database partition</p>
+                </div>
+                <a href="{{ url_for('history.history') }}" class="btn-secondary-custom" style="padding: 0.4rem 0.9rem; font-size: 0.82rem;">
+                    <span>View All History</span>
+                    <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+                </a>
+            </div>
+
+            {% if recent_analyses %}
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Analyzed Text Snippet</th>
+                            <th>Sentiment</th>
+                            <th>Polarity</th>
+                            <th>Subjectivity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in recent_analyses %}
+                        <tr>
+                            <td style="font-size: 0.82rem; color: #94a3b8; white-space: nowrap;">
+                                {{ r.created_at.strftime('%b %d, %H:%M') }}
+                            </td>
+                            <td>
+                                <span style="display: block; max-width: 320px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #f1f5f9;">
+                                    "{{ r.preview_text }}"
+                                </span>
+                            </td>
+                            <td>
+                                {% if r.sentiment == 'POSITIVE' %}
+                                    <span class="badge-sentiment badge-pos">{{ r.sentiment }}</span>
+                                {% elif r.sentiment == 'NEGATIVE' %}
+                                    <span class="badge-sentiment badge-neg">{{ r.sentiment }}</span>
+                                {% else %}
+                                    <span class="badge-sentiment badge-neu">{{ r.sentiment }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono); font-weight: 600; color: {% if r.polarity > 0.1 %}#10b981{% elif r.polarity < -0.1 %}#f43f5e{% else %}#06b6d4{% endif %};">
+                                {{ r.polarity_display }}
+                            </td>
+                            <td style="font-family: var(--font-mono); color: #cbd5e1;">
+                                {{ r.subjectivity_display }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="logo-icon-box mx-auto mb-3" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle);">
+                    <i data-lucide="inbox" style="color: #94a3b8; width: 22px; height: 22px;"></i>
+                </div>
+                <h3 class="h6 text-light mb-1">No analysis records logged yet</h3>
+                <p class="text-muted" style="font-size: 0.85rem; max-width: 400px; margin: 0 auto 1.25rem;">
+                    Start by typing or pasting text into the Sentiment Analyzer to populate your live metrics.
+                </p>
+                <a href="{{ url_for('sentiment.analyze') }}" class="btn-brand" style="font-size: 0.88rem; padding: 0.5rem 1.2rem;">
+                    <i data-lucide="sparkles" style="width: 15px; height: 15px;"></i>
+                    <span>Launch Analyzer</span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Live Distribution Breakdown -->
+    <div class="col-lg-4">
+        <div class="glass-card h-100 d-flex flex-column">
+            <h2 class="h5 fw-bold mb-1">Sentiment Distribution</h2>
+            <p class="text-secondary mb-3" style="font-size: 0.82rem;">Real-time ratio across your entire dataset</p>
+
+            <div style="flex: 1; min-height: 240px; position: relative;">
+                <canvas id="sentimentDistChart"></canvas>
+            </div>
+
+            <div class="mt-3 pt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between text-center">
+                <div>
+                    <span style="font-size: 0.75rem; color: #10b981; font-weight: 600;">POSITIVE</span>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">{{ stats.positive }}</div>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: #f43f5e; font-weight: 600;">NEGATIVE</span>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">{{ stats.negative }}</div>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: #06b6d4; font-weight: 600;">NEUTRAL</span>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff;">{{ stats.neutral }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

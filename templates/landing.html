@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Understand What Your Text Really Says{% endblock %}
+
+{% block public_content %}
+<div class="landing-hero py-5 text-center position-relative overflow-hidden">
+    <!-- Ambient Glow effects -->
+    <div style="position: absolute; top: -150px; left: 50%; transform: translateX(-50%); width: 600px; height: 350px; background: radial-gradient(circle, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.15) 50%, transparent 80%); filter: blur(60px); pointer-events: none;"></div>
+
+    <div class="container position-relative py-5">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-4 rounded-pill glass-card" style="border: 1px solid rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.08);">
+            <i data-lucide="sparkles" style="width: 15px; height: 15px; color: #818cf8;"></i>
+            <span style="font-size: 0.8rem; font-weight: 600; color: #c7d2fe; letter-spacing: 0.05em; text-transform: uppercase;">
+                Production-Ready AI Text Analytics
+            </span>
+        </div>
+
+        <h1 class="display-3 fw-bold mb-4" style="max-width: 900px; margin: 0 auto; letter-spacing: -0.03em; line-height: 1.15;">
+            Understand What Your Text <span style="background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #38bdf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Really Says.</span>
+        </h1>
+
+        <p class="lead mb-5 text-secondary mx-auto" style="max-width: 680px; font-size: 1.25rem;">
+            Analyze sentiment, polarity, and subjectivity with a powerful AI-powered text intelligence platform.
+        </p>
+
+        <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
+            <a href="{{ url_for('sentiment.analyze') if current_user else url_for('auth.register') }}" class="btn-brand" style="font-size: 1.05rem; padding: 0.85rem 2rem;" id="hero-analyze-btn">
+                <i data-lucide="sparkles" style="width: 18px; height: 18px;"></i>
+                <span>Analyze Text</span>
+            </a>
+            <a href="{{ url_for('analytics.analytics') if current_user else url_for('auth.login') }}" class="btn-secondary-custom" style="font-size: 1.05rem; padding: 0.85rem 2rem;" id="hero-analytics-btn">
+                <i data-lucide="bar-chart-2" style="width: 18px; height: 18px;"></i>
+                <span>View Analytics</span>
+            </a>
+        </div>
+
+        <!-- Live Visual Preview Showcase -->
+        <div class="mt-5 mx-auto text-start glass-card" style="max-width: 820px; border-color: rgba(255, 255, 255, 0.12); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #f43f5e; display: inline-block;"></span>
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                    <span class="ms-2 text-muted" style="font-size: 0.8rem; font-family: var(--font-mono);">sentimentiq://nlp-live-stream</span>
+                </div>
+                <span class="badge-sentiment badge-pos">POSITIVE (+0.82)</span>
+            </div>
+
+            <div class="p-3 rounded mb-3" style="background: rgba(11, 16, 28, 0.7); border: 1px solid rgba(255,255,255,0.06); font-size: 1.02rem; color: #e2e8f0; line-height: 1.6;">
+                "SentimentIQ delivers extraordinary accuracy and an incredibly sleek analytics experience! The real-time telemetry is brilliant, intuitive, and genuinely delightful to work with."
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">Polarity</span>
+                            <span style="font-size: 0.95rem; font-weight: 700; color: #10b981; font-family: var(--font-mono);">+0.82</span>
+                        </div>
+                        <div class="gauge-track polarity-track mt-2">
+                            <div class="gauge-pin" style="left: 91%;"></div>
+                        </div>
+                        <div class="gauge-labels">
+                            <span>Negative (-1.0)</span>
+                            <span>Neutral (0.0)</span>
+                            <span>Positive (+1.0)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">Subjectivity</span>
+                            <span style="font-size: 0.95rem; font-weight: 700; color: #c084fc; font-family: var(--font-mono);">0.45</span>
+                        </div>
+                        <div class="gauge-track subjectivity-track mt-2">
+                            <div class="gauge-pin" style="left: 45%;"></div>
+                        </div>
+                        <div class="gauge-labels">
+                            <span>Objective (0.0)</span>
+                            <span>Balanced (0.5)</span>
+                            <span>Subjective (1.0)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="h2 fw-bold">Enterprise-Grade Natural Language Intelligence</h2>
+        <p class="text-secondary">Explore the core capabilities powering SentimentIQ's computational linguistics engine.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Feature 1: Sentiment Detection -->
+        <div class="col-md-4">
+            <div class="glass-card h-100 glass-card-interactive">
+                <div class="logo-icon-box mb-4" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <i data-lucide="check-circle-2" style="color: #10b981; width: 22px; height: 22px;"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">Sentiment Detection</h3>
+                <p class="text-secondary" style="font-size: 0.92rem;">
+                    Accurately categorizes input text into Positive, Negative, or Neutral states using rigorous threshold validation and linguistic pattern heuristics.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 2: Polarity Analysis -->
+        <div class="col-md-4">
+            <div class="glass-card h-100 glass-card-interactive">
+                <div class="logo-icon-box mb-4" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3);">
+                    <i data-lucide="sliders" style="color: #818cf8; width: 22px; height: 22px;"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">Polarity Analysis</h3>
+                <p class="text-secondary" style="font-size: 0.92rem;">
+                    Measures emotional orientation along a continuous spectrum from -1.0 (strongly negative) to +1.0 (strongly positive) with visual gauge representation.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 3: Subjectivity Analysis -->
+        <div class="col-md-4">
+            <div class="glass-card h-100 glass-card-interactive">
+                <div class="logo-icon-box mb-4" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3);">
+                    <i data-lucide="target" style="color: #c084fc; width: 22px; height: 22px;"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">Subjectivity Analysis</h3>
+                <p class="text-secondary" style="font-size: 0.92rem;">
+                    Distinguishes pure factual assertions (0.0 Objective) from personal bias, judgment, or intense individual opinions (1.0 Subjective).
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 4: History -->
+        <div class="col-md-6">
+            <div class="glass-card h-100 glass-card-interactive">
+                <div class="logo-icon-box mb-4" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3);">
+                    <i data-lucide="archive" style="color: #38bdf8; width: 22px; height: 22px;"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">History & Searchable Log</h3>
+                <p class="text-secondary" style="font-size: 0.92rem;">
+                    Every analysis is securely cataloged in your private database. Filter by sentiment, search text keywords, inspect detailed sentence breakdowns, and export complete audit trails directly to CSV via Pandas.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 5: Analytics -->
+        <div class="col-md-6">
+            <div class="glass-card h-100 glass-card-interactive">
+                <div class="logo-icon-box mb-4" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i data-lucide="pie-chart" style="color: #fbbf24; width: 22px; height: 22px;"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">Real Database Analytics</h3>
+                <p class="text-secondary" style="font-size: 0.92rem;">
+                    Dynamic Chart.js visualizations built exclusively from real user data records. Track sentiment distributions, polarity histograms, and usage timelines without simulated dummy statistics.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

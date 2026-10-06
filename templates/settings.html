@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | SentimentIQ{% endblock %}
+{% block page_title %}Settings & Diagnostics{% endblock %}
+{% block page_subtitle %}Manage your account profile, interface preferences, and system telemetry{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left Column: Profile & Theme Preferences -->
+    <div class="col-lg-6">
+        <!-- Profile Card -->
+        <div class="glass-card mb-4">
+            <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="user-avatar" style="width: 52px; height: 52px; font-size: 1.3rem;">
+                    {{ user.username[:2].upper() }}
+                </div>
+                <div>
+                    <h2 class="h5 fw-bold mb-0 text-light">{{ user.username }}</h2>
+                    <span class="text-secondary" style="font-size: 0.85rem;">Account Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'Recently' }}</span>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('main.settings') }}">
+                <input type="hidden" name="action" value="update_profile">
+                
+                <div class="mb-3">
+                    <label class="form-label text-secondary" style="font-size: 0.82rem; font-weight: 600;">Username (Permanent)</label>
+                    <input type="text" class="form-control bg-dark text-muted border-secondary border-opacity-50" value="{{ user.username }}" readonly disabled>
+                </div>
+
+                <div class="mb-3">
+                    <label for="profileEmail" class="form-label text-secondary" style="font-size: 0.82rem; font-weight: 600;">Email Address</label>
+                    <input type="email" class="form-control bg-dark text-light border-secondary border-opacity-50" id="profileEmail" name="email" value="{{ user.email }}" required>
+                </div>
+
+                <button type="submit" class="btn-brand" style="font-size: 0.88rem; padding: 0.5rem 1.2rem;">
+                    <i data-lucide="save" style="width: 15px; height: 15px;"></i>
+                    <span>Save Profile Changes</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- UI Theme & Styling Card -->
+        <div class="glass-card">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i data-lucide="palette" style="width: 18px; height: 18px; color: #818cf8;"></i>
+                <h3 class="h6 fw-bold mb-0 text-light">Theme Customization</h3>
+            </div>
+            <p class="text-secondary" style="font-size: 0.85rem;">Select your preferred dark visual aesthetic for the dashboard workspace.</p>
+
+            <form method="POST" action="{{ url_for('main.settings') }}">
+                <input type="hidden" name="action" value="save_preferences">
+
+                <div class="d-flex flex-column gap-2 mb-4">
+                    <label class="p-3 rounded d-flex align-items-center justify-content-between cursor-pointer" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); cursor: pointer;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="radio" name="theme" value="dark-charcoal" class="form-check-input mt-0" {% if current_theme == 'dark-charcoal' %}checked{% endif %}>
+                            <div>
+                                <strong class="text-light d-block" style="font-size: 0.9rem;">Dark Charcoal (Default)</strong>
+                                <span class="text-muted" style="font-size: 0.78rem;">Sleek SaaS aesthetic with deep charcoal and glowing indigo</span>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25">Active</span>
+                    </label>
+
+                    <label class="p-3 rounded d-flex align-items-center justify-content-between cursor-pointer" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); cursor: pointer;">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="radio" name="theme" value="midnight-blue" class="form-check-input mt-0" {% if current_theme == 'midnight-blue' %}checked{% endif %}>
+                            <div>
+                                <strong class="text-light d-block" style="font-size: 0.9rem;">Midnight Cyan</strong>
+                                <span class="text-muted" style="font-size: 0.78rem;">Deep navy undertones with vibrant electric cyan accents</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-secondary-custom" style="font-size: 0.88rem; padding: 0.5rem 1.2rem;">
+                    <span>Apply Theme</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Analysis Preferences & Database Telemetry -->
+    <div class="col-lg-6">
+        <!-- Analysis Preferences -->
+        <div class="glass-card mb-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <i data-lucide="sliders" style="width: 18px; height: 18px; color: #818cf8;"></i>
+                <h3 class="h6 fw-bold mb-0 text-light">Analysis Preferences</h3>
+            </div>
+
+            <div class="p-3 rounded mb-3" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="text-light fw-semibold" style="font-size: 0.88rem;">Classification Sensitivity</span>
+                    <span class="badge bg-secondary text-light">Standard (&plusmn;0.10)</span>
+                </div>
+                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
+                    Texts with polarity greater than +0.10 are labeled Positive, below -0.10 are Negative, and within [-0.10, +0.10] are Neutral.
+                </p>
+            </div>
+
+            <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="prefAutoSave" checked disabled>
+                <label class="form-check-label text-light" for="prefAutoSave" style="font-size: 0.85rem;">
+                    Automatically save every evaluation to personal SQLite history
+                </label>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="prefSentenceBreakdown" checked disabled>
+                <label class="form-check-label text-light" for="prefSentenceBreakdown" style="font-size: 0.85rem;">
+                    Enable sentence-level sentiment decomposition in result panel
+                </label>
+            </div>
+        </div>
+
+        <!-- Database Status & System Diagnostics -->
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i data-lucide="database" style="width: 18px; height: 18px; color: #10b981;"></i>
+                    <h3 class="h6 fw-bold mb-0 text-light">Database Diagnostic Telemetry</h3>
+                </div>
+                <span class="badge-sentiment badge-pos" style="font-size: 0.72rem; padding: 0.2rem 0.6rem;">Connected</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table-custom mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-secondary" style="font-size: 0.82rem; width: 45%;">Database Engine</td>
+                            <td class="text-light fw-semibold" style="font-size: 0.85rem;">{{ db_status.engine }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary" style="font-size: 0.82rem;">SQLite Version</td>
+                            <td class="text-light" style="font-family: var(--font-mono); font-size: 0.85rem;">v{{ db_status.sqlite_version }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary" style="font-size: 0.82rem;">Database File Size</td>
+                            <td class="text-light" style="font-family: var(--font-mono); font-size: 0.85rem;">{{ db_status.size_kb }} KB</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary" style="font-size: 0.82rem;">Your Saved Records</td>
+                            <td class="text-info fw-bold" style="font-family: var(--font-mono); font-size: 0.85rem;">{{ db_status.user_records }} records</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary" style="font-size: 0.82rem;">Total System Records</td>
+                            <td class="text-light" style="font-family: var(--font-mono); font-size: 0.85rem;">{{ db_status.total_system_records }} records</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 text-center">
+                <span class="text-muted" style="font-size: 0.78rem;">
+                    {{ internship_credit }} &bull; SQLAlchemy ORM Active
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

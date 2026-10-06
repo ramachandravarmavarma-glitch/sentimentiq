@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis History | SentimentIQ{% endblock %}
+{% block page_title %}Analysis History{% endblock %}
+{% block page_subtitle %}Audit trail of all text intelligence evaluations{% endblock %}
+
+{% block content %}
+<div class="glass-card mb-4">
+    <!-- Filter and Action Toolbar -->
+    <div class="row g-3 align-items-center justify-content-between">
+        <!-- Search and Sentiment Filter Form -->
+        <div class="col-lg-8">
+            <form method="GET" action="{{ url_for('history.history') }}" class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary border-opacity-50 text-secondary">
+                            <i data-lucide="search" style="width: 15px; height: 15px;"></i>
+                        </span>
+                        <input type="text" class="form-control bg-dark text-light border-secondary border-opacity-50" name="q" value="{{ search_query }}" placeholder="Search text keywords..." id="history-search-input">
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <select class="form-select bg-dark text-light border-secondary border-opacity-50" name="sentiment" id="history-sentiment-filter" onchange="this.form.submit()">
+                        <option value="ALL" {% if sentiment_filter == 'ALL' %}selected{% endif %}>All Sentiments ({{ counts.ALL }})</option>
+                        <option value="POSITIVE" {% if sentiment_filter == 'POSITIVE' %}selected{% endif %}>Positive ({{ counts.POSITIVE }})</option>
+                        <option value="NEGATIVE" {% if sentiment_filter == 'NEGATIVE' %}selected{% endif %}>Negative ({{ counts.NEGATIVE }})</option>
+                        <option value="NEUTRAL" {% if sentiment_filter == 'NEUTRAL' %}selected{% endif %}>Neutral ({{ counts.NEUTRAL }})</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <select class="form-select bg-dark text-light border-secondary border-opacity-50" name="sort" id="history-sort-select" onchange="this.form.submit()">
+                        <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                        <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                        <option value="highest_polarity" {% if sort_by == 'highest_polarity' %}selected{% endif %}>Highest Polarity</option>
+                        <option value="lowest_polarity" {% if sort_by == 'lowest_polarity' %}selected{% endif %}>Lowest Polarity</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1">
+                    <a href="{{ url_for('history.history') }}" class="btn btn-sm btn-outline-secondary w-100" title="Reset Filters">
+                        <i data-lucide="rotate-ccw" style="width: 14px; height: 14px;"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Export CSV Button (Real Pandas Export) -->
+        <div class="col-lg-4 text-lg-end d-flex gap-2 justify-content-lg-end">
+            <a href="{{ url_for('history.export_csv') }}" class="btn-brand" style="padding: 0.5rem 1.1rem; font-size: 0.88rem;" id="btn-export-csv">
+                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                <span>Export CSV</span>
+            </a>
+            <button type="button" class="btn-secondary-custom text-danger" style="padding: 0.5rem 0.9rem; font-size: 0.88rem;" data-bs-toggle="modal" data-bs-target="#clearAllModal" title="Clear all history">
+                <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- History Table Card -->
+<div class="glass-card">
+    {% if results %}
+    <div class="table-responsive">
+        <table class="table-custom" id="history-table">
+            <thead>
+                <tr>
+                    <th style="width: 16%;">Date</th>
+                    <th style="width: 44%;">Text Preview</th>
+                    <th style="width: 12%;">Sentiment</th>
+                    <th style="width: 10%;">Polarity</th>
+                    <th style="width: 10%;">Subjectivity</th>
+                    <th style="width: 8%; text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr id="row-{{ r.id }}">
+                    <td style="font-size: 0.85rem; color: #94a3b8; white-space: nowrap;">
+                        {{ r.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+                    <td>
+                        <span class="text-light" style="display: block; max-width: 420px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                            "{{ r.preview_text }}"
+                        </span>
+                        <span class="text-muted" style="font-size: 0.75rem;">
+                            {{ r.word_count }} words &bull; {{ r.char_count }} chars
+                        </span>
+                    </td>
+                    <td>
+                        {% if r.sentiment == 'POSITIVE' %}
+                            <span class="badge-sentiment badge-pos">{{ r.sentiment }}</span>
+                        {% elif r.sentiment == 'NEGATIVE' %}
+                            <span class="badge-sentiment badge-neg">{{ r.sentiment }}</span>
+                        {% else %}
+                            <span class="badge-sentiment badge-neu">{{ r.sentiment }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-family: var(--font-mono); font-weight: 600; color: {% if r.polarity > 0.1 %}#10b981{% elif r.polarity < -0.1 %}#f43f5e{% else %}#06b6d4{% endif %};">
+                        {{ r.polarity_display }}
+                    </td>
+                    <td style="font-family: var(--font-mono); color: #c084fc;">
+                        {{ r.subjectivity_display }}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-inline-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-info p-1 px-2 btn-view-record" data-id="{{ r.id }}" title="View Full Analysis">
+                                <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('history.delete_record', record_id=r.id) }}" style="display: inline;" onsubmit="return confirm('Delete this analysis record permanently?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger p-1 px-2" title="Delete record">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pagination.pages > 1 %}
+    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-secondary border-opacity-25">
+        <span class="text-muted" style="font-size: 0.85rem;">
+            Showing page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} records)
+        </span>
+        <ul class="pagination pagination-sm mb-0">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link bg-dark text-light border-secondary border-opacity-50" href="{{ url_for('history.history', page=pagination.prev_num, q=search_query, sentiment=sentiment_filter, sort=sort_by) }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link bg-dark text-light border-secondary border-opacity-50 {% if p == pagination.page %}bg-primary border-primary{% endif %}" href="{{ url_for('history.history', page=p, q=search_query, sentiment=sentiment_filter, sort=sort_by) }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link bg-dark text-secondary border-secondary border-opacity-50">&hellip;</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link bg-dark text-light border-secondary border-opacity-50" href="{{ url_for('history.history', page=pagination.next_num, q=search_query, sentiment=sentiment_filter, sort=sort_by) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <div class="logo-icon-box mx-auto mb-3" style="width: 48px; height: 48px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-subtle);">
+            <i data-lucide="search-x" style="color: #94a3b8; width: 24px; height: 24px;"></i>
+        </div>
+        <h3 class="h6 text-light mb-1">No matching analysis records found</h3>
+        <p class="text-muted" style="font-size: 0.85rem; max-width: 380px; margin: 0 auto 1.25rem;">
+            {% if search_query or sentiment_filter != 'ALL' %}
+                Try adjusting your search criteria or resetting filters.
+            {% else %}
+                Your analysis history is currently empty. Run your first text evaluation in the Analyzer!
+            {% endif %}
+        </p>
+        {% if search_query or sentiment_filter != 'ALL' %}
+            <a href="{{ url_for('history.history') }}" class="btn-secondary-custom" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+                Reset Filters
+            </a>
+        {% else %}
+            <a href="{{ url_for('sentiment.analyze') }}" class="btn-brand" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+                Go to Analyzer
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal: View Analysis Detail -->
+<div class="modal fade" id="viewDetailModal" tabindex="-1" aria-labelledby="viewDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-card p-0" style="border-color: rgba(255, 255, 255, 0.15); background: #0e1424;">
+            <div class="modal-header border-secondary border-opacity-25 p-4 pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="logo-icon-box" style="width: 40px; height: 40px;">
+                        <i data-lucide="file-text" style="color: #ffffff; width: 20px; height: 20px;"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 fw-bold mb-0 text-light" id="viewDetailModalLabel">Analysis Inspection</h2>
+                        <span id="modalDate" class="text-muted" style="font-size: 0.78rem;"></span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-secondary fw-semibold" style="font-size: 0.82rem;">EVALUATED TEXT</span>
+                    <span id="modalSentimentBadge" class="badge-sentiment"></span>
+                </div>
+                <div id="modalFullText" class="p-3 rounded mb-4" style="background: rgba(7, 10, 17, 0.8); border: 1px solid rgba(255,255,255,0.08); font-size: 0.95rem; color: #f1f5f9; line-height: 1.6; max-height: 220px; overflow-y: auto;">
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">Polarity Score</span>
+                                <span id="modalPolarityVal" style="font-family: var(--font-mono); font-weight: 700; font-size: 1.1rem;"></span>
+                            </div>
+                            <div class="gauge-track polarity-track mt-2">
+                                <div id="modalPolarityPin" class="gauge-pin"></div>
+                            </div>
+                            <div class="gauge-labels">
+                                <span>-1.0 Negative</span>
+                                <span>0.0 Neutral</span>
+                                <span>+1.0 Positive</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">Subjectivity Score</span>
+                                <span id="modalSubjectivityVal" style="font-family: var(--font-mono); font-weight: 700; font-size: 1.1rem; color: #c084fc;"></span>
+                            </div>
+                            <div class="gauge-track subjectivity-track mt-2">
+                                <div id="modalSubjectivityPin" class="gauge-pin"></div>
+                            </div>
+                            <div class="gauge-labels">
+                                <span>0.0 Objective</span>
+                                <span>0.5 Balanced</span>
+                                <span>1.0 Subjective</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between text-muted" style="font-size: 0.8rem;">
+                    <span>Words: <strong id="modalWordCount" class="text-light"></strong></span>
+                    <span>Characters: <strong id="modalCharCount" class="text-light"></strong></span>
+                    <span>Sentences: <strong id="modalSentenceCount" class="text-light"></strong></span>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary border-opacity-25 p-3">
+                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Clear All Confirmation -->
+<div class="modal fade" id="clearAllModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card" style="background: #0e1424; border-color: rgba(244, 63, 94, 0.3);">
+            <div class="modal-header border-0 pb-0">
+                <h2 class="h5 modal-title text-danger d-flex align-items-center gap-2">
+                    <i data-lucide="alert-triangle"></i>
+                    <span>Confirm Clear History</span>
+                </h2>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-secondary">
+                Are you sure you want to delete your entire sentiment analysis history? This action cannot be undone.
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn-secondary-custom" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('history.clear_all') }}">
+                    <button type="submit" class="btn btn-danger px-3 py-2" style="border-radius: 8px;">Delete All Records</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const detailModal = new bootstrap.Modal(document.getElementById('viewDetailModal'));
+
+    document.querySelectorAll('.btn-view-record').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const recordId = btn.getAttribute('data-id');
+            try {
+                const res = await fetch(`/api/history/${recordId}`);
+                const data = await res.json();
+                if (data.success) {
+                    const r = data.record;
+                    document.getElementById('modalDate').textContent = r.date_formatted || r.created_at;
+                    document.getElementById('modalFullText').textContent = r.text;
+                    
+                    const badge = document.getElementById('modalSentimentBadge');
+                    badge.className = 'badge-sentiment';
+                    if (r.sentiment === 'POSITIVE') badge.classList.add('badge-pos');
+                    else if (r.sentiment === 'NEGATIVE') badge.classList.add('badge-neg');
+                    else badge.classList.add('badge-neu');
+                    badge.textContent = r.sentiment;
+
+                    const polVal = document.getElementById('modalPolarityVal');
+                    polVal.textContent = r.polarity_display;
+                    polVal.style.color = r.polarity > 0.1 ? '#10b981' : (r.polarity < -0.1 ? '#f43f5e' : '#06b6d4');
+                    document.getElementById('modalPolarityPin').style.left = `${r.polarity_percent}%`;
+
+                    document.getElementById('modalSubjectivityVal').textContent = r.subjectivity_display;
+                    document.getElementById('modalSubjectivityPin').style.left = `${r.subjectivity_percent}%`;
+
+                    document.getElementById('modalWordCount').textContent = r.word_count;
+                    document.getElementById('modalCharCount').textContent = r.char_count;
+                    document.getElementById('modalSentenceCount').textContent = r.sentence_count;
+
+                    detailModal.show();
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Failed to fetch record details", "danger");
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

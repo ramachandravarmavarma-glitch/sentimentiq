@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Text | Sentiment Workspace{% endblock %}
+{% block page_title %}Sentiment Analyzer{% endblock %}
+{% block page_subtitle %}Evaluate polarity, subjectivity, and emotional orientation in real-time{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left Column: Input Workspace -->
+    <div class="col-lg-6">
+        <div class="glass-card position-relative">
+            <!-- Loading Overlay with custom animation -->
+            <div id="loadingOverlay" class="loading-overlay">
+                <div class="loading-spinner"></div>
+                <div class="text-light fw-bold" style="font-family: var(--font-heading); font-size: 1.1rem; letter-spacing: 0.02em;">
+                    Analyzing text...
+                </div>
+                <div class="text-secondary" style="font-size: 0.8rem;">Computing TextBlob NLP polarity & subjectivity vectors</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i data-lucide="edit-3" style="width: 18px; height: 18px; color: #818cf8;"></i>
+                    <h2 class="h5 fw-bold mb-0">Input Workspace</h2>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="counter-badge"><span id="wordCount">0</span> words</span>
+                    <span class="counter-badge"><span id="charCount">0</span> characters</span>
+                </div>
+            </div>
+
+            <!-- Example Presets Section -->
+            <div class="mb-3">
+                <span class="text-secondary" style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.4rem;">
+                    Load Example Text:
+                </span>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="example-chip chip-pos" data-example="positive" id="btn-example-pos">
+                        <i data-lucide="smile" style="width: 14px; height: 14px;"></i>
+                        <span>Positive Example</span>
+                    </button>
+                    <button type="button" class="example-chip chip-neg" data-example="negative" id="btn-example-neg">
+                        <i data-lucide="frown" style="width: 14px; height: 14px;"></i>
+                        <span>Negative Example</span>
+                    </button>
+                    <button type="button" class="example-chip chip-neu" data-example="neutral" id="btn-example-neu">
+                        <i data-lucide="meh" style="width: 14px; height: 14px;"></i>
+                        <span>Neutral Example</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Large Input Editor -->
+            <form id="sentimentForm" method="POST" action="{{ url_for('sentiment.analyze') }}">
+                <div class="mb-3">
+                    <textarea 
+                        class="text-analyzer-textarea" 
+                        id="analysisInput" 
+                        name="text" 
+                        placeholder="Paste or type your text here... (reviews, social posts, feedback, articles, comments)"
+                        rows="8"
+                        required
+                    >{{ input_text or (result.text if result else '') }}</textarea>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn-secondary-custom" id="clearBtn" title="Clear text area">
+                        <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
+                        <span>Clear</span>
+                    </button>
+
+                    <button type="submit" class="btn-brand" id="analyzeBtn">
+                        <i data-lucide="cpu" style="width: 16px; height: 16px;"></i>
+                        <span>Analyze Sentiment</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Documented Classification Thresholds Alert -->
+            <div class="mt-4 p-3 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); font-size: 0.8rem; color: #94a3b8;">
+                <div class="d-flex align-items-center gap-1 mb-1 fw-semibold text-light">
+                    <i data-lucide="info" style="width: 14px; height: 14px; color: #818cf8;"></i>
+                    <span>Classification Engine Thresholds</span>
+                </div>
+                <div>&bull; <strong style="color: #34d399;">Positive</strong>: Polarity &gt; +0.10</div>
+                <div>&bull; <strong style="color: #fb7185;">Negative</strong>: Polarity &lt; -0.10</div>
+                <div>&bull; <strong style="color: #38bdf8;">Neutral</strong>: -0.10 &le; Polarity &le; +0.10</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Result Panel & Gauges -->
+    <div class="col-lg-6">
+        <!-- Initial Empty State Placeholder -->
+        <div id="emptyStatePanel" class="glass-card text-center py-5 h-100 d-flex flex-column align-items-center justify-content-center" {% if result %}style="display: none !important;"{% endif %}>
+            <div class="logo-icon-box mb-3" style="width: 56px; height: 56px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25);">
+                <i data-lucide="radar" style="color: #818cf8; width: 28px; height: 28px;"></i>
+            </div>
+            <h3 class="h5 fw-bold text-light mb-2">Awaiting Text Input</h3>
+            <p class="text-secondary" style="max-width: 360px; font-size: 0.88rem; margin-bottom: 1.5rem;">
+                Enter statements in the workspace or select one of the example presets to compute real-time sentiment telemetry.
+            </p>
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill" style="background: rgba(255, 255, 255, 0.04); font-size: 0.8rem; color: #94a3b8;">
+                <i data-lucide="zap" style="width: 14px; height: 14px; color: #f59e0b;"></i>
+                <span>Instant NLP scoring powered by TextBlob</span>
+            </div>
+        </div>
+
+        <!-- Dynamic Result Panel -->
+        <div id="resultPanel" class="glass-card" {% if not result %}style="display: none;"{% endif %}>
+            <!-- Result Panel Header -->
+            <div class="d-flex justify-content-between align-items-start pb-3 mb-4 border-bottom border-secondary border-opacity-25">
+                <div>
+                    <span class="text-secondary text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.08em;">
+                        Detected Classification
+                    </span>
+                    <div class="mt-1">
+                        <span id="resSentimentBadge" class="badge-sentiment {% if result %}{% if result.sentiment == 'POSITIVE' %}badge-pos{% elif result.sentiment == 'NEGATIVE' %}badge-neg{% else %}badge-neu{% endif %}{% endif %}">
+                            {{ result.sentiment if result else 'POSITIVE' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="text-secondary text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.08em; display: block;">
+                        Analyzed Timestamp
+                    </span>
+                    <span id="resTimestamp" class="text-light" style="font-family: var(--font-mono); font-size: 0.82rem;">
+                        {{ result.date_formatted if result and result.date_formatted else 'Just now' }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Visual Explanations: Gauge 1 (Polarity) -->
+            <div class="p-3 rounded mb-4" style="background: rgba(14, 20, 36, 0.8); border: 1px solid var(--border-subtle);">
+                <div class="gauge-header">
+                    <div>
+                        <span class="gauge-title">Polarity Score</span>
+                        <div id="resPolarityNuance" class="text-secondary" style="font-size: 0.78rem;">
+                            {{ result.polarity_nuance if result else 'Strongly Positive' }}
+                        </div>
+                    </div>
+                    <div id="resPolarityVal" class="gauge-val-display" style="color: {% if result %}{% if result.polarity > 0.1 %}#10b981{% elif result.polarity < -0.1 %}#f43f5e{% else %}#06b6d4{% endif %}{% else %}#10b981{% endif %};">
+                        {{ result.polarity_display if result else '+0.82' }}
+                    </div>
+                </div>
+
+                <!-- Continuous Visual Rail -->
+                <div class="gauge-track polarity-track mt-2">
+                    <div class="gauge-midpoint" title="Origin 0.00"></div>
+                    <div id="resPolarityPin" class="gauge-pin" style="left: {{ result.polarity_percent if result else 91 }}%;"></div>
+                </div>
+
+                <div class="gauge-labels">
+                    <span>Negative (-1.0) &larr;</span>
+                    <span>&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&bull;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
+                    <span>&rarr; Positive (+1.0)</span>
+                </div>
+            </div>
+
+            <!-- Visual Explanations: Gauge 2 (Subjectivity) -->
+            <div class="p-3 rounded mb-4" style="background: rgba(14, 20, 36, 0.8); border: 1px solid var(--border-subtle);">
+                <div class="gauge-header">
+                    <div>
+                        <span class="gauge-title">Subjectivity Score</span>
+                        <div id="resSubjectivityNuance" class="text-secondary" style="font-size: 0.78rem;">
+                            {{ result.subjectivity_nuance if result else 'Balanced Opinion & Facts' }}
+                        </div>
+                    </div>
+                    <div id="resSubjectivityVal" class="gauge-val-display" style="color: #c084fc;">
+                        {{ result.subjectivity_display if result else '0.45' }}
+                    </div>
+                </div>
+
+                <!-- Continuous Visual Rail -->
+                <div class="gauge-track subjectivity-track mt-2">
+                    <div id="resSubjectivityPin" class="gauge-pin" style="left: {{ result.subjectivity_percent if result else 45 }}%;"></div>
+                </div>
+
+                <div class="gauge-labels">
+                    <span>Objective (0.0) &larr;</span>
+                    <span>&mdash;&mdash;&mdash;&mdash;&bull;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
+                    <span>&rarr; Subjective (+1.0)</span>
+                </div>
+            </div>
+
+            <!-- Linguistic Metrics Summary Row -->
+            <div class="row g-2 text-center mb-4">
+                <div class="col-4">
+                    <div class="p-2 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">Words</div>
+                        <div id="resWordCount" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: #fff;">
+                            {{ result.word_count if result else 0 }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">Characters</div>
+                        <div id="resCharCount" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: #fff;">
+                            {{ result.char_count if result else 0 }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2 rounded" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">Sentences</div>
+                        <div id="resSentenceCount" style="font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: #fff;">
+                            {{ result.sentence_count if result else 0 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sentence-Level Breakdown -->
+            <div>
+                <h4 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
+                    <i data-lucide="list" style="width: 15px; height: 15px; color: #818cf8;"></i>
+                    <span>Sentence-by-Sentence Breakdown</span>
+                </h4>
+                <div id="resSentenceList" style="max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                    {% if result and result.sentences %}
+                        {% for s in result.sentences %}
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.65rem;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span style="font-size: 0.78rem; font-weight: 600; color: #94a3b8;">Sentence #{{ loop.index }}</span>
+                                <span class="badge-sentiment {% if s.sentiment == 'POSITIVE' %}badge-pos{% elif s.sentiment == 'NEGATIVE' %}badge-neg{% else %}badge-neu{% endif %}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+                                    {{ s.sentiment }} ({{ s.polarity_display }})
+                                </span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.9rem; color: #e2e8f0; line-height: 1.5;">"{{ s.sentence }}"</p>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/sentiment.js') }}"></script>
+{% endblock %}
